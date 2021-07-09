@@ -1,6 +1,8 @@
 package ckrg
 
 type Result struct {
+	Name       string
+	Ok         bool
 	Region     string
 	Restricted bool
 }

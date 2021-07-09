@@ -11,5 +11,5 @@ const (
 )
 
 func init() {
-	RegisterPlugin(id, name, CheckGetCode(url, map[int]bool{200: false, 403: true}, ""))
+	RegisterPlugin(id, name, CheckGetCode(name, url, map[int]bool{200: false, 403: true}, ""))
 }

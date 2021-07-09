@@ -11,5 +11,5 @@ const (
 )
 
 func init() {
-	RegisterPlugin(id, name, CheckGetCode(url, map[int]bool{404: false, 403: true}, UA_Dalvik))
+	RegisterPlugin(id, name, CheckGetCode(name, url, map[int]bool{404: false, 403: true}, UaDalvik))
 }

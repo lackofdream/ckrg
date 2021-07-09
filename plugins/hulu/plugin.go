@@ -12,5 +12,5 @@ const (
 )
 
 func init() {
-	RegisterPlugin(id, name, CheckGetSubstring(url, substr, false))
+	RegisterPlugin(id, name, CheckGetSubstring(name, url, substr, false))
 }

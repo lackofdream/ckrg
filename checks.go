@@ -8,12 +8,16 @@ import (
 	"strings"
 )
 
-const UA_Dalvik = "Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
+const UaDalvik = "Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
 
-func CheckGetCode(url string, codeToRestricted map[int]bool, ua string) func() (Result, error) {
+func CheckGetCode(name string, url string, codeToRestricted map[int]bool, ua string) func() (Result, error) {
 	return func() (Result, error) {
 		client := &http.Client{}
 		req, err := http.NewRequest("GET", url, nil)
+		ret := Result{
+			Name: name,
+			Ok:   true,
+		}
 		if err != nil {
 			return Result{}, err
 		}
@@ -26,15 +30,20 @@ func CheckGetCode(url string, codeToRestricted map[int]bool, ua string) func() (
 		}
 		for k, v := range codeToRestricted {
 			if resp.StatusCode == k {
-				return Result{Restricted: v}, nil
+				ret.Restricted = v
+				return ret, nil
 			}
 		}
 		return Result{}, errors.New(fmt.Sprintf("unknown status: %d", resp.StatusCode))
 	}
 }
 
-func CheckGetSubstring(url string, substr string, restrictedIfContains bool) func() (Result, error) {
+func CheckGetSubstring(name string, url string, substr string, restrictedIfContains bool) func() (Result, error) {
 	return func() (Result, error) {
+		ret := Result{
+			Name: name,
+			Ok:   true,
+		}
 		resp, err := http.Get(url)
 		if err != nil {
 			return Result{}, err
@@ -45,12 +54,10 @@ func CheckGetSubstring(url string, substr string, restrictedIfContains bool) fun
 			return Result{}, err
 		}
 		if strings.Contains(string(text), substr) {
-			return Result{
-				Restricted: restrictedIfContains,
-			}, nil
+			ret.Restricted = restrictedIfContains
+		} else {
+			ret.Restricted = !restrictedIfContains
 		}
-		return Result{
-			Restricted: !restrictedIfContains,
-		}, nil
+		return ret, nil
 	}
 }
