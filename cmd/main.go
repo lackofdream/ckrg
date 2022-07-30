@@ -2,13 +2,16 @@ package main
 
 import (
 	. "ckrg"
+	_ "ckrg/plugins/erogamescape"
 	_ "ckrg/plugins/kancolle"
 	_ "ckrg/plugins/niconico"
 	_ "ckrg/plugins/pcrjp"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"sync"
+	"time"
 )
 
 func showIPAndISP() {
@@ -18,7 +21,9 @@ func showIPAndISP() {
 }
 
 func check(plugin Plugin, resCh chan<- Result) {
+	fmt.Printf("checking %s\n", plugin.Name)
 	res, err := plugin.Check()
+	fmt.Printf("%s checked\n", plugin.Name)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\terror: %s\n", plugin.Name, err.Error())
 	}
@@ -28,16 +33,15 @@ func check(plugin Plugin, resCh chan<- Result) {
 func receiveAndSortResult(resCh <-chan Result, wg *sync.WaitGroup) []string {
 	var ret []string
 	for res := range resCh {
-		if !res.Ok {
-			continue
+		if res.Ok {
+			ret = append(ret,
+				fmt.Sprintf("%s\t%s\n", res.Name, func() string {
+					if res.Restricted {
+						return "No"
+					}
+					return "Yes"
+				}()))
 		}
-		ret = append(ret,
-			fmt.Sprintf("%s\t%s\n", res.Name, func() string {
-				if res.Restricted {
-					return "No"
-				}
-				return "Yes"
-			}()))
 		wg.Done()
 	}
 	sort.Strings(ret)
@@ -45,6 +49,7 @@ func receiveAndSortResult(resCh <-chan Result, wg *sync.WaitGroup) []string {
 }
 
 func main() {
+	http.DefaultClient.Timeout = 5 * time.Second
 	showIPAndISP()
 	wg := sync.WaitGroup{}
 	resCh := make(chan Result, 8)

@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	u "net/url"
 	"strings"
+	"time"
 )
 
 const UaDalvik = "Dalvik/2.1.0 (Linux; U; Android 9; ALP-AL00 Build/HUAWEIALP-AL00)"
 
 func CheckGetCode(name string, url string, codeToRestricted map[int]bool, ua string) func() (Result, error) {
 	return func() (Result, error) {
-		client := &http.Client{}
+		client := http.DefaultClient
 		req, err := http.NewRequest("GET", url, nil)
 		ret := Result{
 			Name: name,
@@ -57,6 +59,26 @@ func CheckGetSubstring(name string, url string, substr string, restrictedIfConta
 			ret.Restricted = restrictedIfContains
 		} else {
 			ret.Restricted = !restrictedIfContains
+		}
+		return ret, nil
+	}
+}
+
+func CheckGetTimeout(name string, url string, timeout time.Duration) func() (Result, error) {
+	return func() (Result, error) {
+		ret := Result{
+			Name: name,
+			Ok:   true,
+		}
+		client := &http.Client{}
+		client.Timeout = timeout
+		_, err := client.Get(url)
+		if err != nil {
+			if err.(*u.Error).Timeout() {
+				ret.Restricted = true
+			} else {
+				return Result{}, err
+			}
 		}
 		return ret, nil
 	}
